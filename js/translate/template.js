@@ -28,6 +28,7 @@ translations.en_US = {  // replace en_US to ll_CC, examples: zh_CN, de_AT.
     'Pause All': '',
     'Resume Paused': '',
     'Purge Completed': '',
+    'Shutdown Server': '',
     'Settings': '',
     'Connection Settings': '',
     'Global Settings': '',
@@ -53,13 +54,14 @@ translations.en_US = {  // replace en_US to ll_CC, examples: zh_CN, de_AT.
     'Paused': '',
     'Removed': '',
     'Hide linked meta-data': '',
-    'Displaying': '',
-    'of': '',
-    'downloads': '',
     'Toggle': '',
     'Reset filters': '',
+// download status
+    'Verifing': '',
+    'Verify Pending': '',
 // starred properties
     'Quick Access Settings': '',
+    'Save': '',
     'Save settings': '',
     'Currently no download in line to display, use the': '',
     'download button to start downloading files!': '',
@@ -75,8 +77,6 @@ translations.en_US = {  // replace en_US to ll_CC, examples: zh_CN, de_AT.
     '- You can also add multiple URIs (mirrors) for the *same* file. To do this, separate the URIs by a space.':
         '',
     '- A URI can be HTTP(S)/FTP/BitTorrent-Magnet.': '',
-    'E.g. to add 2 files (downloads) f1.jpg and f2.mp4 with 2 URIs (mirrors) each, add URIs as follows':
-        '',
     'Download settings': '',
     'Advanced settings': '',
     'Cancel': '',
@@ -134,7 +134,7 @@ translations.en_US = {  // replace en_US to ll_CC, examples: zh_CN, de_AT.
         '',
     'Or you can open the latest version in the browser through': '',
     'Close': '',
-// lables
+// labels
     'Download status':'',
     'Download Speed':'',
     'Upload Speed':'',
@@ -146,5 +146,22 @@ translations.en_US = {  // replace en_US to ll_CC, examples: zh_CN, de_AT.
     'Uploaded':'',
     'Download GID':'',
     'Number of Pieces':'',
-    'Piece Length':''
+    'Piece Length':'',
+
+//alerts
+    'The last connection attempt was unsuccessful. Trying another configuration': 
+        '',
+    'Oh Snap!': '',
+    'Could not connect to the aria2 RPC server. Will retry in 10 secs. You might want to check the connection settings by going to Settings > Connection Settings':
+        '',
+    'Authentication failed while connecting to Aria2 RPC server. Will retry in 10 secs. You might want to confirm your authentication details by going to Settings > Connection Settings':
+        '',
+    'Successfully connected to Aria2 through its remote RPC …':
+        '',
+    'Successfully connected to Aria2 through remote RPC, however the connection is still insecure. For complete security try adding an authorization secret token while starting Aria2 (through the flag --rpc-secret)':
+        '',
+    'Trying to connect to aria2 using the new connection configuration':
+        '',
+    'Remove {{name}} and associated meta-data?': // {{name}} refers to the download name, do not modify.
+        ''
 };

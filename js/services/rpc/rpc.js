@@ -5,8 +5,8 @@ angular
 ])
 .factory('$rpc', [
   '$syscall', '$globalTimeout', '$alerts', '$utils',
-  '$rootScope', '$location', '$authconf',
-function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
+  '$rootScope', '$location', '$authconf', '$filter',
+function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf, filter) {
 
   var subscriptions = []
     , configurations = [authconf]
@@ -20,7 +20,6 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
   if(cookieConf) configurations.unshift(cookieConf);
 
   if (['http', 'https'].indexOf(uri.protocol()) != -1 && uri.host() != 'localhost') {
-    console.log(uri.host());
     configurations.push({
       host: uri.host(),
       path: '/jsonrpc',
@@ -39,9 +38,11 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
       path: authconf.path,
       encrypt: ( uri.protocol() == 'https' )
     });
-    console.log(configurations);
   }
 
+
+  // set if we got error on connection. This will cause another connection attempt.
+  var needNewConnection = true;
 
   // update is implemented such that
   // only one syscall at max is ongoing
@@ -57,11 +58,18 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
     });
     var subs = subscriptions.slice();
     if (!subs.length) {
-      timeout = setTimeout(update, time);
+      timeout = setTimeout(update, globalTimeout);
       return;
     }
 
-    if (configurations.length) {
+    if (syscall.state == 'initializing') {
+      console.log("Syscall is initializing, waiting");
+      timeout = setTimeout(update, globalTimeout);
+      return;
+    }
+
+    if (needNewConnection && configurations.length) {
+      needNewConnection = false;
       currentConf = configurations[0];
       if (currentConf && currentConf.auth && currentConf.auth.token) {
         currentToken = currentConf.auth.token;
@@ -70,6 +78,8 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
         currentToken = null;
       }
       syscall.init(currentConf);
+      timeout = setTimeout(update, globalTimeout);
+      return;
     }
 
     var params = _.map(subs, function(s) {
@@ -84,16 +94,19 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
     });
 
     var error = function() {
+      needNewConnection = true;
       var ind = configurations.indexOf(currentConf);
       if (ind != -1) configurations.splice(ind, 1);
 
       // If some proposed configurations are still in the pipeline then retry
       if (configurations.length) {
-        alerts.log("The last connection attempt was unsuccessful. Trying another configuration");
+        alerts.log(filter('translate')("The last connection attempt was unsuccessful. Trying another configuration"));
         timeout = setTimeout(update, 0);
       }
       else {
-        alerts.addAlert('<strong>Oh Snap!</strong> Could not connect to the aria2 RPC server. Will retry in 10 secs. You might want to check the connection settings by going to Settings > Connection Settings', 'error');
+        alerts.addAlert('<strong>' + filter('translate')('Oh Snap!') + '</strong> ' +
+          filter('translate')('Could not connect to the aria2 RPC server. Will retry in 10 secs. You might want to check the connection settings by going to Settings > Connection Settings')
+        , 'error');
         timeout = setTimeout(update, globalTimeout);
       }
     };
@@ -102,12 +115,14 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
       name: 'system.multicall',
       params: [params],
       success: function(data) {
-        var failed = _.any(data.result, function(d) {
+        var failed = _.some(data.result, function(d) {
           return d.code && d.message === "Unauthorized";
         });
 
         if (failed) {
-          alerts.addAlert('<strong>Oh Snap!</strong> Authentication failed while connecting to Aria2 RPC server. Will retry in 10 secs. You might want to confirm your authentication details  by going to Settings > Connection Settings', 'error');
+          needNewConnection = true;
+          alerts.addAlert('<strong>' + filter('translate')('Oh Snap!') + '</strong> ' +
+            filter('translate')('Authentication failed while connecting to Aria2 RPC server. Will retry in 10 secs. You might want to confirm your authentication details by going to Settings > Connection Settings', 'error'));
           timeout = setTimeout(update, globalTimeout);
           return;
         }
@@ -116,9 +131,9 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
           // configuration worked, save it in cookie for next time and
           // delete the pipelined configurations!!
           if (currentToken)
-            alerts.addAlert('Successfully connected to Aria2 through its remote RPC …', 'success');
+            alerts.addAlert(filter('translate')('Successfully connected to Aria2 through its remote RPC …'), 'success');
           else
-            alerts.addAlert('Successfully connected to Aria2 through remote RPC, however the connection is still insecure. For complete security try adding an authorization secret token while starting Aria2 (through the flag --rpc-secret)');
+            alerts.addAlert(filter('translate')('Successfully connected to Aria2 through remote RPC, however the connection is still insecure. For complete security try adding an authorization secret token while starting Aria2 (through the flag --rpc-secret)'));
           configurations = [];
         }
 
@@ -167,7 +182,7 @@ function(syscall, globalTimeout, alerts, utils, rootScope, uri, authconf) {
     // each one will be tried one after the other till success,
     // for all options for one conf read rpc/syscall.js
     configure: function(conf) {
-      alerts.addAlert('Trying to connect to aria2 using the new connection configuration', 'info');
+      alerts.addAlert(filter('translate')('Trying to connect to aria2 using the new connection configuration'), 'info');
 
       if (conf instanceof Array)
         configurations = conf;
